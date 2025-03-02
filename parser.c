@@ -16,7 +16,10 @@ char* read_cmd(void){
   char *buffer = malloc(sizeof(char)*buf_size);
   int ch;
 
-  while (( ch = fgetc(stdin)) != EOF ){
+  while (( ch = fgetc(stdin)) != EOF){
+    if (ch == '\n') {
+      break;
+    }
     buffer[pos] = ch;
 
     if (pos == buf_size - 1){
@@ -93,18 +96,11 @@ int execute_cmd(char **tokens){
 
 }
 
-// Main function.
-void shell(void){
-  char *cmd = read_cmd();
-  char **tokens = parse_cmd(cmd);
-
-}
-
-int main() {
-    char *cmd = read_cmd();
-    char** tokens = parse_cmd(cmd);
-    execute_cmd(tokens);
-    free(cmd);
-    free(tokens);
-    return 0;
-}
+//int main() {
+//    char *cmd = read_cmd();
+//    char** tokens = parse_cmd(cmd);
+//    execute_cmd(tokens);
+//    free(cmd);
+//    free(tokens);
+//    return 0;
+//}

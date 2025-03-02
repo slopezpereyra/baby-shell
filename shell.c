@@ -1,28 +1,31 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include"parser.h"
+#include"cmds.h"
 #include<string.h>
 
 
 void shell(){
   char* cmd;
-  char** tokens;
+  struct execcmd * tokens;
   printf("MyBash : ");
   while (1){
-    cmd = read_cmd();
+    cmd = read_stdin();
 
     if ( cmd  == NULL ) {
       printf("Error reading cmd");
       break;
     }
 
-    tokens = parse_cmd(cmd);
+    tokens = parse_exec_cmd(cmd);
     
-    if (tokens[0] != NULL){
+    if (( tokens -> argv )[0] != NULL){
 
-      if ( strcmp(tokens[0], "exit") == 0 ) break;
+      char* program = (tokens -> argv)[0];
 
-      printf("Executing %s\n", tokens[0]);
+      if ( strcmp(program, "exit") == 0 ) break;
+
+      printf("Executing %s\n", program);
       
       execute_cmd(tokens);
 

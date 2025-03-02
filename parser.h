@@ -11,13 +11,13 @@
 #define DEFAULT_BUF_SIZE 1
 
 // Function to read a command from stdin and return it as a dynamically allocated buffer
-char* read_cmd(void);
+char* read_stdin(void);
 
 // Function to parse a command string into space-separated tokens
-char** parse_cmd(char* cmd);
+struct execcmd * parse_exec_cmd(char* cmd);
 
 // Function to execute a command by forking a new process and running the command using execvp
-int execute_cmd(char **tokens);
+int execute_cmd(struct execcmd *cmd);
 
 
 #endif // PARSER_H

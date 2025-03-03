@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include"parser.h"
 #include"cmds.h"
+#include"executer.h"
 #include<string.h>
 
 void shell(){
@@ -15,12 +16,20 @@ void shell(){
       printf("Error reading cmd");
       break;
     }
-    parse_stdin(cmd);
+    tree_parse(cmd);
   }
   free(cmd);
   free(execution_cmd);
 }
 
 int main(){
-  shell();
+//  shell();
+  char first_cmd[] = "ls -1\0";
+  char second_cmd[] = "wc -l\0";
+  struct execcmd *left = parse_exec_cmd(first_cmd);
+  struct execcmd *right = parse_exec_cmd(second_cmd);
+  struct pipecmd *pipe_cmd = malloc(sizeof(struct pipecmd));
+  pipe_cmd -> left = left;
+  pipe_cmd -> right = right;
+  execute_pipeline(pipe_cmd);
 }

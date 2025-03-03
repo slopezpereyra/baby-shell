@@ -7,8 +7,6 @@
 #include "cmds.h"
 #include "executer.h"
 
-#define DEFAULT_BUF_SIZE 1
-
 //
 // Allocate DEFAULT_BUF_SIZE bytes into a buffer and write that many bytes into
 // it from stdin. Return the allocated buffer.
@@ -67,55 +65,36 @@ struct execcmd * parse_exec_cmd(char* buffer){
   return cmd;
 }
 
-// Recursive tree parsing.
-// strtok is modifying buff
-void parse_stdin(char* buff){
-  // Ensure the buffer is null-terminated.
+// Recursively parse a cmd buffer as a tree. Split each ";"-separated block into
+// two leaves and parse them separately. Base case is a buffer without ";".
+void tree_parse(char *buff){
+
   int l = strlen (buff);
   if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
-
-  char *cur_token = malloc(sizeof(char)*l);
-  struct execcmd *execution_cmd = init_exec_cmd();
-  char* program;
   int i = 0;
-  int j = 0;
 
-  while (1){
-    if (buff[i] != '\0' && buff[i] != ';'){
-      cur_token[i] = buff[j];
-      i++;
-      j++;
+  while (buff[i] != '\0'){
+
+    if (buff[i] == ';'){
+      // We use pointer arithmetic: ';' is separated by '\0' and two new
+      // pointers to the same memory block `buff` are given: one pointing at the
+      // beginning of the block, one pointing exactly after '\0'.
+      buff[i] = '\0';
+      char * node_left = buff;
+      char * node_right = buff + i + 1;
+      tree_parse(node_left);
+      tree_parse(node_right);
+      return;
     }
-    else {
-      execution_cmd =  parse_exec_cmd(cur_token);
-      program = (execution_cmd -> argv)[0];
-
-      if (program == NULL) exit(0);
-      if ( strcmp(program, "exit") == 0 ) exit(1);
-
-      execute_cmd(execution_cmd);
-      
-      // Clear the array by setting all characters to '\0'
-      for (int i = 0; i < l; i++) {
-          cur_token[i] = '\0';
-      }
-      i = 0;
-      j++;
-      printf("MyBash : ");
-      if (buff[j] == '\0') break;
-    }
-
+    i++;
   }
-  return;
+  // HERE we should NOT parse_exec_cmd but parse_abstract_cmd,
+  // detect the cmd_type, cast to the corresponding struct (pipecmd or 
+  // exec_cmd, for instance), and then resolve to execution. We still need a 
+  // parse_pipe_cmd function that correctly creates an instance of pipecmd.
+  struct execcmd *execution_cmd =  parse_exec_cmd(buff);
+  execute_cmd(execution_cmd);
+  printf("My Bash: ");
+      
 }
-  
 
-
-//int main() {
-//    char *cmd = read_stdin();
-//    char** tokens = parse_cmd(cmd);
-//    execute_cmd(tokens);
-//    free(cmd);
-//    free(tokens);
-//    return 0;
-//}

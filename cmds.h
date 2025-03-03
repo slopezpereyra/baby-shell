@@ -28,8 +28,8 @@ struct execcmd {
 
 struct pipecmd {
   cmd_type type;
-  struct cmd *left;
-  struct cmd *right;
+  struct execcmd *left;
+  struct execcmd *right;
 };
 
 

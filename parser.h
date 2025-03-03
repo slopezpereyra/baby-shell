@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 
 // Define the default buffer size used for reading commands
-#define DEFAULT_BUF_SIZE 1
+#define DEFAULT_BUF_SIZE 16
 
 // Function to read a command from stdin and return it as a dynamically allocated buffer
 char* read_stdin(void);
@@ -18,5 +18,6 @@ struct execcmd * parse_exec_cmd(char* cmd);
 
 void parse_stdin(char* buff);
 
+void tree_parse(char *buff);
 
 #endif // PARSER_H

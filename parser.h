@@ -16,8 +16,7 @@ char* read_stdin(void);
 // Function to parse a command string into space-separated tokens
 struct execcmd * parse_exec_cmd(char* cmd);
 
-// Function to execute a command by forking a new process and running the command using execvp
-int execute_cmd(struct execcmd *cmd);
+void parse_stdin(char* buff);
 
 
 #endif // PARSER_H

@@ -21,8 +21,8 @@ struct cmd {
 struct execcmd {
   cmd_type type;
   unsigned int n_args;
-  char* argv[MAX_ARGS];
-  char* arge[MAX_ARGS];
+  char* argv[MAX_ARGS + 1];
+  char* arge[MAX_ARGS + 1];
 };
 
 
@@ -31,5 +31,8 @@ struct pipecmd {
   struct cmd *left;
   struct cmd *right;
 };
+
+
+struct execcmd *init_exec_cmd();
 
 #endif // CMDS_H

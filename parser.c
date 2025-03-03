@@ -1,9 +1,11 @@
+#include "parser.h"
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include "cmds.h"
+#include "executer.h"
 
 #define DEFAULT_BUF_SIZE 1
 
@@ -44,14 +46,8 @@ char* read_stdin(void){
 //
 struct execcmd * parse_exec_cmd(char* buffer){
   // Remove "\n" from end of line in `cmd`, if present.
-  int l = strlen (buffer);
-  if (l > 0 && buffer [l - 1] == '\n') buffer [l - 1] = '\0';
 
-  struct execcmd *cmd = malloc(sizeof(struct execcmd *));
-  (cmd->n_args) = 0;
-
-  int buf_size = DEFAULT_BUF_SIZE;
-  // Proceed  to tokenize.
+  struct execcmd *cmd = init_exec_cmd();
   char *cur_token = strtok(buffer, " ");
 
   while (cur_token != NULL){
@@ -64,13 +60,55 @@ struct execcmd * parse_exec_cmd(char* buffer){
     cur_token = strtok(NULL, " ");
   }
 
-  for (unsigned int i = 0; i < cmd -> n_args; i++){
+  for (unsigned int i = 0; i < cmd -> n_args + 1; i++){
     printf("Argument %d : %s\n", i, (cmd->argv)[i]);
   }
 
   return cmd;
 }
 
+// Recursive tree parsing.
+// strtok is modifying buff
+void parse_stdin(char* buff){
+  // Ensure the buffer is null-terminated.
+  int l = strlen (buff);
+  if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
+
+  char *cur_token = malloc(sizeof(char)*l);
+  struct execcmd *execution_cmd = init_exec_cmd();
+  char* program;
+  int i = 0;
+  int j = 0;
+
+  while (1){
+    if (buff[i] != '\0' && buff[i] != ';'){
+      cur_token[i] = buff[j];
+      i++;
+      j++;
+    }
+    else {
+      execution_cmd =  parse_exec_cmd(cur_token);
+      program = (execution_cmd -> argv)[0];
+
+      if (program == NULL) exit(0);
+      if ( strcmp(program, "exit") == 0 ) exit(1);
+
+      execute_cmd(execution_cmd);
+      
+      // Clear the array by setting all characters to '\0'
+      for (int i = 0; i < l; i++) {
+          cur_token[i] = '\0';
+      }
+      i = 0;
+      j++;
+      printf("MyBash : ");
+      if (buff[j] == '\0') break;
+    }
+
+  }
+  return;
+}
+  
 
 
 //int main() {

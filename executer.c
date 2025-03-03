@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "cmds.h"
+
+
 // 
 // Execute commands from a tokenized buffer.
 //
@@ -16,6 +18,7 @@ int execute_cmd(struct execcmd *cmd){
   if ( pid == 0 ){
     printf("Child: attempting to execute\n");
     if ( execvp((cmd->argv)[0], cmd->argv) == -1 ){
+      printf("Failed to execute...\n");
       exit(EXIT_FAILURE);
     }
   }else if ( pid < 0 ){

@@ -1,7 +1,17 @@
 #include <stdio.h> 
 #include <stdlib.h>
+#include "cmds.h"
 #include <unistd.h>
 #include <sys/wait.h>
+
+struct execcmd *init_exec_cmd(){
+  struct execcmd * cmd = malloc(sizeof(struct execcmd));
+  // Ensure last byte is null terminating string.
+  ( cmd->argv )[MAX_ARGS] = NULL;
+  (cmd -> n_args) = 0;
+  (cmd -> type) = EXEC;
+
+}
 
 //void execute_command(struct cmd *cmd){
 //  

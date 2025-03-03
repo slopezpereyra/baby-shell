@@ -4,10 +4,9 @@
 #include"cmds.h"
 #include<string.h>
 
-
 void shell(){
   char* cmd;
-  struct execcmd * tokens;
+  struct execcmd * execution_cmd;
   printf("MyBash : ");
   while (1){
     cmd = read_stdin();
@@ -16,27 +15,10 @@ void shell(){
       printf("Error reading cmd");
       break;
     }
-
-    tokens = parse_exec_cmd(cmd);
-    
-    if (( tokens -> argv )[0] != NULL){
-
-      char* program = (tokens -> argv)[0];
-
-      if ( strcmp(program, "exit") == 0 ) break;
-
-      printf("Executing %s\n", program);
-      
-      execute_cmd(tokens);
-
-//      free(cmd);
-//      free(tokens);
-      printf("MyBash : ");
-
-    }
+    parse_stdin(cmd);
   }
   free(cmd);
-  free(tokens);
+  free(execution_cmd);
 }
 
 int main(){

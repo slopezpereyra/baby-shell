@@ -11,17 +11,16 @@
 //
 int execute_cmd(struct execcmd *cmd){
 
+
   char* program = (cmd -> argv)[0];
 
   if (program == NULL) exit(0);
   if ( strcmp(program, "exit") == 0 ) exit(1);
 
   int status;
-  printf("Forking...\n");
   pid_t pid = fork();
 
   if ( pid == 0 ){
-    printf("Child: attempting to execute\n");
     if ( execvp(program, cmd->argv) == -1 ){
       printf("Failed to execute...\n");
       exit(EXIT_FAILURE);
@@ -57,31 +56,38 @@ int execute_pipeline(struct pipecmd *pipe_cmd){
   int pipe_code = pipe(pipefds);
   int status;
 
+  char* left_pipe_program = ( pipe_cmd -> left ) -> argv[0];
+  char* right_pipe_program = ( pipe_cmd -> right ) -> argv[0];
+
+  if (left_pipe_program == NULL || right_pipe_program == NULL) exit (1);
+
   pid_t pid = fork();
 
   if (pid < 0) exit(0);
 
   if (pid == 0){
 
-    char* left_pipe_program = ( pipe_cmd -> left ) -> argv[0];
+    close(pipefds[0]);
     dup2(pipefds[1], STDOUT_FILENO);
+    close(pipefds[1]);
     if ( execvp(left_pipe_program, (pipe_cmd -> left)->argv) == -1 ){
       printf("Failed to execute...\n");
       exit(EXIT_FAILURE);
     }
 
   }else{
-    waitpid(pid, &status, WUNTRACED);
-    if (WIFEXITED(status)) {
-            printf("Child process exited with status %d\n", WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-            printf("Child process terminated by signal %d\n", WTERMSIG(status));
-        }
     close(pipefds[1]);
     dup2(pipefds[0], STDIN_FILENO);
-    execute_cmd(pipe_cmd -> right);
     close(pipefds[0]);
+    waitpid(pid, &status, WUNTRACED);
+    if (WIFEXITED(status)) {
+      printf("Child process exited with status %d\n", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+      printf("Child process terminated by signal %d\n", WTERMSIG(status));
+    }
+    execute_cmd(pipe_cmd -> right);
   }
+
 
   return 1;
 

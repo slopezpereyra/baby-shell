@@ -10,6 +10,17 @@ struct execcmd *init_exec_cmd(){
   ( cmd->argv )[MAX_ARGS] = NULL;
   (cmd -> n_args) = 0;
   (cmd -> type) = EXEC;
+  return cmd;
+}
+
+
+struct pipecmd *init_pipe_cmd(){
+  struct pipecmd * cmd = malloc(sizeof(struct pipecmd));
+  // Ensure last byte is null terminating string.
+  ( cmd->type ) = PIPE;
+  (cmd -> left) = init_exec_cmd();
+  (cmd -> right) = init_exec_cmd();
+  return cmd;
 
 }
 

@@ -11,39 +11,31 @@
 // Allocate DEFAULT_BUF_SIZE bytes into a buffer and write that many bytes into
 // it from stdin. Return the allocated buffer.
 //
-char* read_stdin(void){
-  int buf_size = DEFAULT_BUF_SIZE;
-  int pos = 0;
-  char *buffer = malloc(sizeof(char)*buf_size);
-  int ch;
+#include <stdio.h>
+#include <stdlib.h>
 
-  while (( ch = fgetc(stdin)) != EOF){
-    if (ch == '\n') {
-      break;
-    }
-    buffer[pos] = ch;
+char* read_stdin(void) {
+    fflush(stdout);
 
-    if (pos == buf_size - 1){
-      buf_size += sizeof(char) * (buf_size + DEFAULT_BUF_SIZE );
-      void *tmp = realloc(buffer, buf_size);
-      if (tmp == NULL){ 
-        printf("Failed to extend input buffer\n");
-        exit(EXIT_FAILURE);
-      }
-      buffer = tmp;
+    char *buffer = NULL;  // `getline` will allocate memory
+    size_t buf_size = 0;  // `getline` will update this
+    ssize_t len;
+
+    len = getline(&buffer, &buf_size, stdin); // Read a line from stdin
+
+    if (len == -1) { // Handle EOF or error
+        printf("Reached EOF or read error\n");
+        free(buffer);
+        return NULL;
     }
 
-    pos++;
-
-  }
-  return buffer;
+    return buffer;  // The caller is responsible for freeing `buffer`
 }
 
 //
 // Tokenize a buffer splitting it into space-separated tokens.
 //
 struct execcmd * parse_exec_cmd(char* buffer){
-  // Remove "\n" from end of line in `cmd`, if present.
 
   struct execcmd *cmd = init_exec_cmd();
   char *cur_token = strtok(buffer, " ");
@@ -58,11 +50,26 @@ struct execcmd * parse_exec_cmd(char* buffer){
     cur_token = strtok(NULL, " ");
   }
 
-  for (unsigned int i = 0; i < cmd -> n_args + 1; i++){
-    printf("Argument %d : %s\n", i, (cmd->argv)[i]);
-  }
+  //for (unsigned int i = 0; i < cmd -> n_args + 1; i++){
+  //  printf("Argument %d : %s\n", i, (cmd->argv)[i]);
+  //}
 
   return cmd;
+}
+
+struct pipecmd *parse_pipe_cmd(char *buff){
+  
+  struct pipecmd *pcmd = init_pipe_cmd();
+
+  for (int i = 0; buff[i] != '\0'; i++){
+    if (buff[i] == '|'){
+      buff[i] = '\0';
+      pcmd -> left = parse_exec_cmd(buff);
+      pcmd -> right = parse_exec_cmd(buff + i + 1);
+      break;
+    }
+  }
+  return pcmd;
 }
 
 // Recursively parse a cmd buffer as a tree. Split each ";"-separated block into
@@ -94,6 +101,11 @@ void tree_parse(char *buff){
   // parse_pipe_cmd function that correctly creates an instance of pipecmd.
   struct execcmd *execution_cmd =  parse_exec_cmd(buff);
   execute_cmd(execution_cmd);
+//  struct pipecmd *execution_cmd =  parse_pipe_cmd(buff);
+//  int original_stdin = dup(STDIN_FILENO);  // Save original stdin
+//  execute_pipeline(execution_cmd);
+//  dup2(original_stdin, STDIN_FILENO);  // Restore stdin to original
+//  close(original_stdin);  
   printf("My Bash: ");
       
 }

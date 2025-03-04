@@ -1,11 +1,6 @@
 #ifndef CMDS_H
 #define CMDS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
 #define EXEC 0
 #define REDIRECTOR 1
@@ -34,5 +29,6 @@ struct pipecmd {
 
 
 struct execcmd *init_exec_cmd();
+struct pipecmd *init_pipe_cmd();
 
 #endif // CMDS_H

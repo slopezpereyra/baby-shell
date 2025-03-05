@@ -2,16 +2,13 @@
 #define CMDS_H
 
 
+#define ABSTRACT -1
 #define EXEC 0
-#define REDIRECTOR 1
+#define YUX 1 // Yuxtaposed commands: ";" operator.
 #define PIPE 2
 #define MAX_ARGS 10
 
 typedef unsigned int cmd_type;
-
-struct cmd {
-  cmd_type type;
-};
 
 struct execcmd {
   cmd_type type;

@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <stdio.h> 
+#include <stdbool.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -32,6 +33,23 @@ char* read_stdin(void) {
     return buffer;  // The caller is responsible for freeing `buffer`
 }
 
+cmd_type parse_abstract_cmd(char* buff){
+
+  bool is_pipe = false;
+  for (int i = 0; buff[i] != '\0'; i++){
+    if ( buff[i] == ';' ){
+      return YUX;
+    }
+    if ( buff[i] == '|' && !is_pipe){
+      is_pipe = true;
+    }
+  }
+
+  if (is_pipe)  return PIPE;
+  return EXEC;
+
+}
+
 //
 // Tokenize a buffer splitting it into space-separated tokens.
 //
@@ -57,29 +75,8 @@ struct execcmd * parse_exec_cmd(char* buffer){
   return cmd;
 }
 
-struct pipecmd *parse_pipe_cmd(char *buff){
-  
-  struct pipecmd *pcmd = init_pipe_cmd();
-
-  for (int i = 0; buff[i] != '\0'; i++){
-    if (buff[i] == '|'){
-      buff[i] = '\0';
-      pcmd -> left = parse_exec_cmd(buff);
-      pcmd -> right = parse_exec_cmd(buff + i + 1);
-      break;
-    }
-  }
-  return pcmd;
-}
-
-// Recursively parse a cmd buffer as a tree. Split each ";"-separated block into
-// two leaves and parse them separately. Base case is a buffer without ";".
-void tree_parse(char *buff){
-
-  int l = strlen (buff);
-  if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
+void parse_yux_cmd(char *buff){
   int i = 0;
-
   while (buff[i] != '\0'){
 
     if (buff[i] == ';'){
@@ -95,17 +92,49 @@ void tree_parse(char *buff){
     }
     i++;
   }
-  // HERE we should NOT parse_exec_cmd but parse_abstract_cmd,
-  // detect the cmd_type, cast to the corresponding struct (pipecmd or 
-  // exec_cmd, for instance), and then resolve to execution. We still need a 
-  // parse_pipe_cmd function that correctly creates an instance of pipecmd.
+}
+
+struct pipecmd *parse_pipe_cmd(char *buff){
+  
+  struct pipecmd *pcmd = init_pipe_cmd();
+
+  for (int i = 0; buff[i] != '\0'; i++){
+    if (buff[i] == '|'){
+      buff[i] = '\0';
+      pcmd -> left = parse_exec_cmd(buff);
+      pcmd -> right = parse_exec_cmd(buff + i + 1);
+      break;
+    }
+  }
+  return pcmd;
+}
+
+void tree_parse(char *buff){
+
+  int l = strlen (buff);
+  if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
+
+  cmd_type t = parse_abstract_cmd(buff);
+
+  if (t == YUX){
+    // Calls tree_parse recursively on each node.
+    parse_yux_cmd(buff);
+    return;
+  }
+
+  if (t == PIPE){
+    struct pipecmd *execution_cmd =  parse_pipe_cmd(buff);
+    int original_stdin = dup(STDIN_FILENO);  // Save original stdin
+    execute_pipeline(execution_cmd);
+    dup2(original_stdin, STDIN_FILENO);  // Restore stdin to original
+    close(original_stdin);  
+    printf("My Bash: ");
+    return;
+  }
+
   struct execcmd *execution_cmd =  parse_exec_cmd(buff);
   execute_cmd(execution_cmd);
 //  struct pipecmd *execution_cmd =  parse_pipe_cmd(buff);
-//  int original_stdin = dup(STDIN_FILENO);  // Save original stdin
-//  execute_pipeline(execution_cmd);
-//  dup2(original_stdin, STDIN_FILENO);  // Restore stdin to original
-//  close(original_stdin);  
   printf("My Bash: ");
       
 }

@@ -19,7 +19,7 @@ struct pipecmd *init_pipe_cmd(){
   // Ensure last byte is null terminating string.
   ( cmd->type ) = PIPE;
   (cmd -> left) = init_exec_cmd();
-  (cmd -> right) = init_exec_cmd();
+  (cmd -> right) = NULL;
   return cmd;
 
 }

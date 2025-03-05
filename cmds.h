@@ -21,11 +21,12 @@ struct execcmd {
 struct pipecmd {
   cmd_type type;
   struct execcmd *left;
-  struct execcmd *right;
+  char *right;
 };
 
 
 struct execcmd *init_exec_cmd();
 struct pipecmd *init_pipe_cmd();
+cmd_type parse_abstract_cmd(char* buff);
 
 #endif // CMDS_H

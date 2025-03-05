@@ -15,7 +15,7 @@ char* read_stdin(void);
 
 // Function to parse a command string into space-separated tokens
 struct execcmd * parse_exec_cmd(char* cmd);
-
+struct pipecmd *parse_pipe_cmd(char *buff);
 void parse_stdin(char* buff);
 
 void tree_parse(char *buff);

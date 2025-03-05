@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "parser.h"
 #include "cmds.h"
 
 
@@ -39,6 +40,7 @@ int execute_cmd(struct execcmd *cmd){
 
 
 // The idea is this: 
+// UPDATE THIS DESCRIPTION
 // Create a uni-directional channel of communication (a pipe) between the two
 // process so process A can communicate its output to process B. The
 // communication will be indirect: 
@@ -50,6 +52,8 @@ int execute_cmd(struct execcmd *cmd){
 //
 // - Process A must duplicate STDOUT to the write end.
 // - Process B must duplicate STDIN  to the read end.
+//  
+//  ls | wc -l | awk '{print $1 + 1}'
 int execute_pipeline(struct pipecmd *pipe_cmd){
 
   int pipefds[2];
@@ -57,15 +61,16 @@ int execute_pipeline(struct pipecmd *pipe_cmd){
   int status;
 
   char* left_pipe_program = ( pipe_cmd -> left ) -> argv[0];
-  char* right_pipe_program = ( pipe_cmd -> right ) -> argv[0];
+  char* right_pipe_buffer = pipe_cmd -> right;
+  if (left_pipe_program == NULL || right_pipe_buffer == NULL) exit (1);
+  cmd_type right_pipe_type = parse_abstract_cmd(right_pipe_buffer);
 
-  if (left_pipe_program == NULL || right_pipe_program == NULL) exit (1);
 
   pid_t pid = fork();
 
   if (pid < 0) exit(0);
 
-  if (pid == 0){
+  if (pid == 0){// Child, execute left hand side and write output to pipe.
 
     close(pipefds[0]);
     dup2(pipefds[1], STDOUT_FILENO);
@@ -85,16 +90,21 @@ int execute_pipeline(struct pipecmd *pipe_cmd){
     } else if (WIFSIGNALED(status)) {
       printf("Child process terminated by signal %d\n", WTERMSIG(status));
     }
-    execute_cmd(pipe_cmd -> right);
+
+    // Base case of recursion
+    if (right_pipe_type == EXEC){
+      struct execcmd *right_cmd = parse_exec_cmd(right_pipe_buffer);
+      execute_cmd(right_cmd);
+    }
+    // Recursive case
+    else{
+      struct pipecmd *right_pipe = parse_pipe_cmd(right_pipe_buffer);
+      execute_pipeline(right_pipe);
+    }
+
   }
-
-
   return 1;
-
 }
-
-
-
 
 
 

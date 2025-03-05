@@ -102,7 +102,7 @@ struct pipecmd *parse_pipe_cmd(char *buff){
     if (buff[i] == '|'){
       buff[i] = '\0';
       pcmd -> left = parse_exec_cmd(buff);
-      pcmd -> right = parse_exec_cmd(buff + i + 1);
+      pcmd -> right = buff + i + 1;
       break;
     }
   }

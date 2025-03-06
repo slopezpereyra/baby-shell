@@ -8,7 +8,7 @@
 
 
 // 
-// Execute commands from a tokenized buffer.
+// 
 //
 int execute_cmd(struct execcmd *cmd){
 

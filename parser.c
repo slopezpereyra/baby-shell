@@ -94,6 +94,8 @@ void parse_yux_cmd(char *buff){
   }
 }
 
+// Parse the command buffer of a piped command, initializing a 
+// pipecmd struct pointer.
 struct pipecmd *parse_pipe_cmd(char *buff){
   
   struct pipecmd *pcmd = init_pipe_cmd();
@@ -109,6 +111,7 @@ struct pipecmd *parse_pipe_cmd(char *buff){
   return pcmd;
 }
 
+// Recursive parsing of stdin into tree representation.
 void tree_parse(char *buff){
 
   int l = strlen (buff);

@@ -10,11 +10,11 @@
 
 typedef unsigned int cmd_type;
 
-struct execcmd {
+
+struct yuxcmd {
   cmd_type type;
-  unsigned int n_args;
-  char* argv[MAX_ARGS + 1];
-  char* arge[MAX_ARGS + 1];
+  char *left;
+  char *right;
 };
 
 
@@ -23,6 +23,16 @@ struct pipecmd {
   struct execcmd *left;
   char *right;
 };
+
+struct execcmd {
+  cmd_type type;
+  unsigned int n_args;
+  char* argv[MAX_ARGS + 1];
+  char* arge[MAX_ARGS + 1];
+};
+
+
+
 
 
 struct execcmd *init_exec_cmd();

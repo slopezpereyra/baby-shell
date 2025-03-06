@@ -1,21 +1,27 @@
 #ifndef CMDS_H
 #define CMDS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
+#define ABSTRACT -1
 #define EXEC 0
-#define REDIRECTOR 1
+#define YUX 1 // Yuxtaposed commands: ";" operator.
 #define PIPE 2
 #define MAX_ARGS 10
 
 typedef unsigned int cmd_type;
 
-struct cmd {
+
+struct yuxcmd {
   cmd_type type;
+  char *left;
+  char *right;
+};
+
+
+struct pipecmd {
+  cmd_type type;
+  struct execcmd *left;
+  char *right;
 };
 
 struct execcmd {
@@ -26,13 +32,11 @@ struct execcmd {
 };
 
 
-struct pipecmd {
-  cmd_type type;
-  struct execcmd *left;
-  struct execcmd *right;
-};
+
 
 
 struct execcmd *init_exec_cmd();
+struct pipecmd *init_pipe_cmd();
+cmd_type parse_abstract_cmd(char* buff);
 
 #endif // CMDS_H

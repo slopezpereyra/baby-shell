@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <stdio.h> 
+#include <stdbool.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -11,39 +12,48 @@
 // Allocate DEFAULT_BUF_SIZE bytes into a buffer and write that many bytes into
 // it from stdin. Return the allocated buffer.
 //
-char* read_stdin(void){
-  int buf_size = DEFAULT_BUF_SIZE;
-  int pos = 0;
-  char *buffer = malloc(sizeof(char)*buf_size);
-  int ch;
+#include <stdio.h>
+#include <stdlib.h>
 
-  while (( ch = fgetc(stdin)) != EOF){
-    if (ch == '\n') {
-      break;
-    }
-    buffer[pos] = ch;
+char* read_stdin(void) {
+    fflush(stdout);
 
-    if (pos == buf_size - 1){
-      buf_size += sizeof(char) * (buf_size + DEFAULT_BUF_SIZE );
-      void *tmp = realloc(buffer, buf_size);
-      if (tmp == NULL){ 
-        printf("Failed to extend input buffer\n");
-        exit(EXIT_FAILURE);
-      }
-      buffer = tmp;
+    char *buffer = NULL;  // `getline` will allocate memory
+    size_t buf_size = 0;  // `getline` will update this
+    ssize_t len;
+
+    len = getline(&buffer, &buf_size, stdin); // Read a line from stdin
+
+    if (len == -1) { // Handle EOF or error
+        printf("Reached EOF or read error\n");
+        free(buffer);
+        return NULL;
     }
 
-    pos++;
+    return buffer;  // The caller is responsible for freeing `buffer`
+}
 
+cmd_type parse_abstract_cmd(char* buff){
+
+  bool is_pipe = false;
+  for (int i = 0; buff[i] != '\0'; i++){
+    if ( buff[i] == ';' ){
+      return YUX;
+    }
+    if ( buff[i] == '|' && !is_pipe){
+      is_pipe = true;
+    }
   }
-  return buffer;
+
+  if (is_pipe)  return PIPE;
+  return EXEC;
+
 }
 
 //
 // Tokenize a buffer splitting it into space-separated tokens.
 //
 struct execcmd * parse_exec_cmd(char* buffer){
-  // Remove "\n" from end of line in `cmd`, if present.
 
   struct execcmd *cmd = init_exec_cmd();
   char *cur_token = strtok(buffer, " ");
@@ -58,21 +68,15 @@ struct execcmd * parse_exec_cmd(char* buffer){
     cur_token = strtok(NULL, " ");
   }
 
-  for (unsigned int i = 0; i < cmd -> n_args + 1; i++){
-    printf("Argument %d : %s\n", i, (cmd->argv)[i]);
-  }
+  //for (unsigned int i = 0; i < cmd -> n_args + 1; i++){
+  //  printf("Argument %d : %s\n", i, (cmd->argv)[i]);
+  //}
 
   return cmd;
 }
 
-// Recursively parse a cmd buffer as a tree. Split each ";"-separated block into
-// two leaves and parse them separately. Base case is a buffer without ";".
-void tree_parse(char *buff){
-
-  int l = strlen (buff);
-  if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
+void parse_yux_cmd(char *buff){
   int i = 0;
-
   while (buff[i] != '\0'){
 
     if (buff[i] == ';'){
@@ -88,12 +92,52 @@ void tree_parse(char *buff){
     }
     i++;
   }
-  // HERE we should NOT parse_exec_cmd but parse_abstract_cmd,
-  // detect the cmd_type, cast to the corresponding struct (pipecmd or 
-  // exec_cmd, for instance), and then resolve to execution. We still need a 
-  // parse_pipe_cmd function that correctly creates an instance of pipecmd.
+}
+
+// Parse the command buffer of a piped command, initializing a 
+// pipecmd struct pointer.
+struct pipecmd *parse_pipe_cmd(char *buff){
+  
+  struct pipecmd *pcmd = init_pipe_cmd();
+
+  for (int i = 0; buff[i] != '\0'; i++){
+    if (buff[i] == '|'){
+      buff[i] = '\0';
+      pcmd -> left = parse_exec_cmd(buff);
+      pcmd -> right = buff + i + 1;
+      break;
+    }
+  }
+  return pcmd;
+}
+
+// Recursive parsing of stdin into tree representation.
+void tree_parse(char *buff){
+
+  int l = strlen (buff);
+  if (l > 0 && buff [l - 1] == '\n') buff [l - 1] = '\0';
+
+  cmd_type t = parse_abstract_cmd(buff);
+
+  if (t == YUX){
+    // Calls tree_parse recursively on each node.
+    parse_yux_cmd(buff);
+    return;
+  }
+
+  if (t == PIPE){
+    struct pipecmd *execution_cmd =  parse_pipe_cmd(buff);
+    int original_stdin = dup(STDIN_FILENO);  // Save original stdin
+    execute_pipeline(execution_cmd);
+    dup2(original_stdin, STDIN_FILENO);  // Restore stdin to original
+    close(original_stdin);  
+    printf("My Bash: ");
+    return;
+  }
+
   struct execcmd *execution_cmd =  parse_exec_cmd(buff);
   execute_cmd(execution_cmd);
+//  struct pipecmd *execution_cmd =  parse_pipe_cmd(buff);
   printf("My Bash: ");
       
 }
